@@ -1,0 +1,62 @@
+// 🔥 전역 에러 핸들러
+window.addEventListener('error', (e) => {
+  console.error('🚨 전역 에러:', e);
+  document.body.innerHTML += `<div style="background: red; color: white; padding: 20px; margin: 10px;">🚨 전역 에러: ${e.message}</div>`;
+});
+
+// 🔥 Promise 에러 핸들러  
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('🚨 Promise 에러:', e);
+  document.body.innerHTML += `<div style="background: red; color: white; padding: 20px; margin: 10px;">🚨 Promise 에러: ${e.reason}</div>`;
+});
+
+console.log('🔥 [MAIN] main.ts 시작됨!');
+
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+
+import App from './App.vue'
+import router from './router'
+
+import './assets/main.css'
+
+try {
+  console.log('🔥 [MAIN] 모듈들 임포트 완료');
+
+  const app = createApp(App);
+  console.log('🔥 [MAIN] Vue 앱 생성 완료');
+
+  app.use(createPinia());
+  console.log('🔥 [MAIN] Pinia 추가 완료');
+
+  app.use(router);
+  console.log('🔥 [MAIN] Router 추가 완료');
+
+  console.log('🔥 [MAIN] #app 엘리먼트에 마운트 시도중...');
+  const appElement = document.getElementById('app');
+  
+  if (!appElement) {
+    throw new Error('#app 엘리먼트를 찾을 수 없습니다!');
+  }
+  
+  app.mount('#app');
+  console.log('🔥 [MAIN] 앱 마운트 완료!');
+  
+  // 성공 메시지 표시
+  setTimeout(() => {
+    console.log('🔥 [MAIN] 3초 후 성공 확인');
+    if (appElement.innerHTML.includes('SUCCESS')) {
+      console.log('✅ [MAIN] App.vue가 성공적으로 렌더링됨!');
+    }
+  }, 3000);
+  
+} catch (error: any) {
+  console.error('🚨 [MAIN] 치명적 에러:', error);
+  document.body.innerHTML += `
+    <div style="background: red; color: white; padding: 20px; margin: 10px; font-size: 18px;">
+      🚨 치명적 에러가 발생했습니다!<br>
+      ${error.message}<br>
+      콘솔을 확인해주세요.
+    </div>
+  `;
+}
