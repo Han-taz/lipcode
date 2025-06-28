@@ -54,6 +54,11 @@ async def root():
     print("🌐 [API] 루트 엔드포인트 접근됨")
     return RedirectResponse(url="/swagger-ui")
 
+# API 문서 리다이렉트 추가
+@app.get("/api-docs")
+async def api_docs():
+    return RedirectResponse(url="/swagger-ui")
+
 if __name__ == "__main__":
     print("🚀 [SERVER] 백엔드 서버 시작 중...")
     print("🔧 [SERVER] 포트: 8080")
