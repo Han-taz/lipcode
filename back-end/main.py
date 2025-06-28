@@ -4,6 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import uvicorn
 import os
+from decouple import config
+
+# 환경변수 로딩 확인
+print(f"🔧 [CONFIG] SECRET_KEY: {config('SECRET_KEY', default='default-secret')[:20]}...")
+print(f"🔧 [CONFIG] ALGORITHM: {config('ALGORITHM', default='HS256')}")
 
 from app.core.database import engine
 from app.models import User, MatchRequest  # 모델 임포트

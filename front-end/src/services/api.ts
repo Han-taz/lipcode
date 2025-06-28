@@ -18,9 +18,14 @@ class ApiClient {
     // 요청 인터셉터: JWT 토큰 자동 추가
     this.client.interceptors.request.use((config) => {
       const token = localStorage.getItem('token')
+      console.log('🔍 [API] 요청 인터셉터 - 토큰:', token)
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
+        console.log('✅ [API] Authorization 헤더 추가됨:', config.headers.Authorization)
+      } else {
+        console.log('❌ [API] 토큰이 없음')
       }
+      console.log('🚀 [API] 요청:', config.method?.toUpperCase(), config.url)
       return config
     })
 

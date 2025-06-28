@@ -3,7 +3,7 @@
     <div class="login-card">
       <h1>로그인</h1>
       
-      <form @submit.prevent="handleLogin" @submit="() => console.log('🔥 [LOGIN] 폼 제출됨!')" class="login-form">
+      <form @submit.prevent="actualLogin" class="login-form">
         <div class="form-group">
           <label for="email">이메일</label>
           <input
@@ -34,10 +34,10 @@
 
         <button 
           id="login"
-          type="submit" 
+          type="button" 
           class="login-btn"
           :disabled="authStore.isLoading"
-          @click="() => console.log('🔥 [LOGIN] 버튼 클릭됨!')"
+          @click="actualLogin"
         >
           {{ authStore.isLoading ? '로그인 중...' : '로그인' }}
         </button>
@@ -46,12 +46,22 @@
       <div class="signup-link">
         <p>계정이 없으신가요? <router-link to="/signup">회원가입</router-link></p>
       </div>
+
+      <!-- 디버그 로그 표시 -->
+      <div v-if="debugLogs.length > 0" class="debug-logs">
+        <h3>디버그 로그:</h3>
+        <div class="log-container">
+          <div v-for="(log, index) in debugLogs" :key="index" class="log-item">
+            {{ log }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -59,45 +69,84 @@ console.log('🔥 [LOGIN] LoginView.vue <script> 실행됨!')
 
 const router = useRouter()
 const authStore = useAuthStore()
+const debugLogs = ref<string[]>([])
+
+const addLog = (message: string) => {
+  console.log(message)
+  debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ${message}`)
+  // 최대 20개 로그만 유지
+  if (debugLogs.value.length > 20) {
+    debugLogs.value.shift()
+  }
+}
 
 const form = reactive({
   email: '',
   password: ''
 })
 
-console.log('🔥 [LOGIN] 초기 설정 완료, form:', form)
+addLog('🔥 [LOGIN] 초기 설정 완료')
+addLog(`🔥 [LOGIN] form: ${JSON.stringify(form)}`)
 
-const handleLogin = async () => {
-  console.log('🔥 [LOGIN] handleLogin 함수 호출됨!')
-  console.log('🔥 [LOGIN] 폼 데이터:', form)
+const testClick = () => {
+  addLog('BUTTON CLICKED!')
+  addLog(`Current form: ${JSON.stringify(form)}`)
+  // 수동으로 actualLogin 호출
+  actualLogin()
+}
+
+const actualLogin = async () => {
+  debugLogs.value.push(`[${new Date().toLocaleTimeString()}] 🔥 [LOGIN] 실제 로그인 시작`)
+  debugLogs.value.push(`[${new Date().toLocaleTimeString()}] 🔥 [LOGIN] 폼 데이터: ${JSON.stringify(form)}`)
   
-  authStore.clearError()
+  if (!form.email || !form.password) {
+    debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ❌ [LOGIN] 이메일 또는 패스워드가 비어있음`)
+    return
+  }
   
-  const success = await authStore.login(form.email, form.password)
-  console.log('🔥 [LOGIN] 로그인 결과:', success)
-  
-  if (success) {
-    console.log('✅ [LOGIN] 로그인 성공, 잠시 대기 중...')
+  try {
+    authStore.clearError()
     
-    // 임시로 리다이렉트 지연
-    setTimeout(() => {
-      console.log('✅ [LOGIN] 프로필 페이지로 이동')
-      router.push('/profile')
-    }, 2000) // 2초 후 이동
-  } else {
-    console.log('❌ [LOGIN] 로그인 실패')
+    const success = await authStore.login(form.email, form.password)
+    debugLogs.value.push(`[${new Date().toLocaleTimeString()}] 🔥 [LOGIN] 로그인 결과: ${success}`)
+    
+    if (success) {
+        debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ✅ [LOGIN] 로그인 성공!`)
+        
+        // 토큰 확인
+        const token = localStorage.getItem('token')
+        debugLogs.value.push(`[${new Date().toLocaleTimeString()}] 💾 [LOGIN] 저장된 토큰: ${token ? token.substring(0, 50) + '...' : 'null'}`)
+        
+        // 사용자 정보 확인
+        if (authStore.user) {
+          debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ✅ [LOGIN] 사용자 정보: ${JSON.stringify(authStore.user)}`)
+          debugLogs.value.push(`[${new Date().toLocaleTimeString()}] 🚀 [LOGIN] 프로필 페이지로 이동합니다`)
+          
+          // 정상적으로 프로필 페이지로 이동
+          setTimeout(() => {
+            router.push('/profile')
+          }, 1000)
+        } else {
+          debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ❌ [LOGIN] 사용자 정보가 없음`)
+        }
+      } else {
+      debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ❌ [LOGIN] 로그인 실패`)
+    }
+  } catch (error: any) {
+    debugLogs.value.push(`[${new Date().toLocaleTimeString()}] ❌ [LOGIN] 에러 발생: ${error.message || error}`)
   }
 }
 
 // 이미 로그인된 사용자는 프로필 페이지로 리다이렉트
 onMounted(() => {
-  console.log('🔥 [LOGIN] LoginView 마운트됨!')
-  console.log('🔥 [LOGIN] 인증 상태:', authStore.isAuthenticated)
+  addLog('🔥 [LOGIN] LoginView 마운트됨!')
+  addLog(`🔥 [LOGIN] 인증 상태: ${authStore.isAuthenticated}`)
   
-  if (authStore.isAuthenticated) {
-    console.log('🔥 [LOGIN] 이미 로그인됨, 프로필로 리다이렉트')
-    router.push('/profile')
-  }
+  // 자동 리다이렉트 막음
+  // if (authStore.isAuthenticated) {
+  //   console.log('🔥 [LOGIN] 이미 로그인됨, 프로필로 리다이렉트')
+  //   router.push('/profile')
+  // }
 })
 </script>
 
@@ -207,5 +256,36 @@ onMounted(() => {
 
 .signup-link a:hover {
   text-decoration: underline;
+}
+
+.debug-logs {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.debug-logs h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.log-container {
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.log-item {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #eee;
+  word-break: break-all;
+}
+
+.log-item:last-child {
+  border-bottom: none;
 }
 </style>

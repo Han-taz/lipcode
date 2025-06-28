@@ -13,9 +13,13 @@ def get_current_user(
 ) -> User:
     """현재 인증된 사용자 정보를 반환"""
     token = credentials.credentials
+    print(f"🔍 [AUTH] 받은 토큰: {token}")
+    
     payload = verify_token(token)
+    print(f"🔍 [AUTH] 토큰 검증 결과: {payload}")
     
     if payload is None:
+        print("❌ [AUTH] 토큰 검증 실패")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
@@ -23,7 +27,10 @@ def get_current_user(
         )
     
     user_id: int = int(payload.get("sub"))
+    print(f"🔍 [AUTH] 사용자 ID: {user_id}")
+    
     if user_id is None:
+        print("❌ [AUTH] 사용자 ID가 없음")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",

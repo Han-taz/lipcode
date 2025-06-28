@@ -43,7 +43,8 @@ export class AuthService {
     console.log('🚪 [AUTH] 로그아웃 처리 중...')
     localStorage.removeItem('token')
     console.log('🗑️ [AUTH] 토큰 삭제됨')
-    window.location.href = '/login'
+    console.log('🔍 [AUTH] 로그아웃 완료 - 강제 리다이렉트 막음')
+    // window.location.href = '/login'
   }
 
   // 현재 사용자 정보 조회
